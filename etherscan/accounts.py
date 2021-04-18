@@ -1,6 +1,6 @@
 from .client import Client
 import re
-
+import time
 
 class Account(Client):
     PAGE_NUM_PATTERN = re.compile(
@@ -89,7 +89,15 @@ class Account(Client):
         trans_list = []
         while True:
             self.build_url()
-            req = self.connect()
+            try:
+                req = self.connect()
+                time.sleep(0.2)
+            except Exception as e:
+                print(
+                    "Total number of transactions: %s, error: %s"%(len(trans_list), str(e)))
+                self.page = ''
+                return trans_list
+
             if "No transactions found" in req['message']:
                 print(
                     "Total number of transactions: {}".format(len(trans_list)))
@@ -100,7 +108,7 @@ class Account(Client):
                 # Find any character block that is a integer of any length
                 page_number = re.findall(Account.PAGE_NUM_PATTERN,
                                          self.url_dict[self.PAGE])
-                print("page {} added".format(page_number[0]))
+                # print("page {} added".format(page_number[0]))
                 self.url_dict[self.PAGE] = str(int(page_number[0]) + 1)
 
     def get_blocks_mined_page(self, blocktype='blocks', page=1,
