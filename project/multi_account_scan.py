@@ -19,6 +19,7 @@ print("find %s address in start list" % (len(address_list)))
 def days_to_now(timestamp):
     return (time.time()-int(timestamp))/3600/24
 
+
 def get_all_address_trans_to(address):
     api = accounts.Account(address=address, api_key="DTTR16CPVKIE8XDIF4M6UB65J2X64Q77HS")
     transactions = api.get_all_transactions(offset=100, sort='asc', internal=False)
@@ -28,20 +29,22 @@ def get_all_address_trans_to(address):
             from_address_set.add(transaction["from"])
     if address in from_address_set:
         from_address_set.remove(address)
-    print("find %s address trans to %s" % (len(from_address_set), address))
+    # print("find %s address trans to %s" % (len(from_address_set), address))
     return from_address_set
 
 
 def get_trans_records():
     trans_records = {}
     i = 1
+    log = "Crawling transactions, depth: %s, progress: %s/%s, target address: %s, num source address: %s"
     while i <= depth:
-        for target_address in address_list:
+        for j in range(len(address_list)):
+            target_address = address_list[j]
             if target_address not in trans_records:
                 addresses = get_all_address_trans_to(target_address)
                 trans_records[target_address] = [addresses]
             else:
-                next_level_addresses = {}
+                next_level_addresses = set()
                 for address in trans_records[target_address][-1]:
                     addresses = get_all_address_trans_to(address)
                     next_level_addresses.update(addresses)
@@ -51,9 +54,10 @@ def get_trans_records():
             all_address = set()
             for address_set in trans_records[target_address]:
                 all_address = all_address.union(address_set)
-            print("depth %s, target address: %s, total pre address: %s" % (i, target_address, len(all_address)))
+            print(log % (i, j, len(address_list), target_address, len(all_address)))
         i += 1
     return trans_records
+
 
 trans_records = get_trans_records()
 for target_address in trans_records:
@@ -75,7 +79,8 @@ for i in range(len(all_targets)):
         if len(common_from_adds) > 0:
             has_common_from[(target1, target2)] = list(common_from_adds)
             writer.write("%s, %s: \n"+"".join(["\t"+address+"\n" for address in common_from_adds]))
-        print("%s and %s has %s trans address in common" % (target1, target2, len(common_from_adds)))
+        print("Processing source address, %s and %s has %s source address in common" %
+              (target1, target2, len(common_from_adds)))
 
 
 

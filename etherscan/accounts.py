@@ -94,7 +94,7 @@ class Account(Client):
                 time.sleep(0.2)
             except Exception as e:
                 print(
-                    "Total number of transactions: %s, error: %s"%(len(trans_list), str(e)))
+                    "Total number of transactions: %s" % (len(trans_list)))
                 self.page = ''
                 return trans_list
 
