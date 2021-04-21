@@ -91,10 +91,10 @@ class Account(Client):
             self.build_url()
             try:
                 req = self.connect()
-                time.sleep(0.2)
+                time.sleep(0.21)
             except Exception as e:
                 print(
-                    "Total number of transactions: %s" % (len(trans_list)))
+                    "Total number of transactions: %s, error: %s"%(len(trans_list), str(e)))
                 self.page = ''
                 return trans_list
 

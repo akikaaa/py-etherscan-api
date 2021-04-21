@@ -3,10 +3,9 @@ import sys
 import time
 import json
 
-address_file = sys.argv[1]
-n_days = int(sys.argv[2])
-depth = int(sys.argv[3])
-
+address_file = "address.json.txt"
+n_days = 10000000
+depth = 1
 address_list = []
 
 with open(address_file, 'r') as fin:
@@ -15,6 +14,8 @@ with open(address_file, 'r') as fin:
         address_list.append(user_info["address"])
 print("find %s address in start list" % (len(address_list)))
 
+# address_list = address_list[:100]
+# address_list = ["0x0d830cC4F5Df582a30662f0f01812dA2E47b68Eb", "0xaA8330FB2B4D5D07ABFE7A72262752a8505C6B37"]
 
 def days_to_now(timestamp):
     return (time.time()-int(timestamp))/3600/24
@@ -55,40 +56,32 @@ def get_trans_records():
             for address_set in trans_records[target_address]:
                 all_address = all_address.union(address_set)
             print(log % (i, j, len(address_list), target_address, len(all_address)))
+            # print("depth %s, target address: %s, total pre address: %s" % (i, target_address, len(all_address)))
         i += 1
     return trans_records
 
 
 trans_records = get_trans_records()
+trans_records_set = {}
 for target_address in trans_records:
     all_address = set()
     for address_set in trans_records[target_address]:
-        all_address.union(address_set)
-    trans_records[target_address] = all_address
+        all_address = all_address.union(address_set)
+    trans_records_set[target_address] = all_address
 
 writer = open("result.txt", 'w')
 has_common_from = {}
 all_targets = list(trans_records.keys())
 for i in range(len(all_targets)):
     target1 = all_targets[i]
-    from_adds1 = trans_records[target1]
-    for j in range(i, len(all_targets)):
+    from_adds1 = trans_records_set[target1]
+    from_adds1.add(target1)
+    for j in range(i+1, len(all_targets)):
         target2 = all_targets[j]
-        from_adds2 = trans_records[target2]
+        from_adds2 = trans_records_set[target2]
+        from_adds2.add(target2)
         common_from_adds = from_adds1.intersection(from_adds2)
         if len(common_from_adds) > 0:
             has_common_from[(target1, target2)] = list(common_from_adds)
-            writer.write("%s, %s: \n"+"".join(["\t"+address+"\n" for address in common_from_adds]))
-        print("Processing source address, %s and %s has %s source address in common" %
-              (target1, target2, len(common_from_adds)))
-
-
-
-
-
-
-
-
-
-
-
+            writer.write("%s, %s: \n" % (target1, target2)+"".join(["\t"+address+"\n" for address in common_from_adds]))
+        print("%s and %s has %s trans address in common" % (target1, target2, len(common_from_adds)))
